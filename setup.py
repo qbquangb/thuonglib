@@ -12,7 +12,7 @@ with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='thuonglib',                    # Tên gói: thường chỉ gồm chữ thường và dấu gạch ngang
-    version='1.0.0',                      # Phiên bản: tuân theo Semantic Versioning
+    version='1.0.3',                      # Phiên bản: tuân theo Semantic Versioning
     author='Tran Dinh Thuong',
     author_email='qbquangbinh@gmail.com',
     url='https://github.com/qbquangb/thuonglib',  # URL của project
@@ -46,6 +46,11 @@ setup(
         # Operating system
         'Operating System :: OS Independent',
     ],
+    entry_points={                        # nếu bạn có command-line scripts
+        'console_scripts': [
+            'mylib=thuonglib.thuonglib:main',
+        ],
+    },
     # include_package_data=True,            # bao gồm các file theo MANIFEST.in (nếu có)
     # zip_safe=False,
 )
@@ -53,6 +58,10 @@ setup(
 
 '''
 1. python setup.py sdist bdist_wheel
-2. python -m twine upload dist/*
-3. pip install thuonglib
+2. python -m twine upload --repository testpypi dist/*
+   python -m twine upload dist/*
+   python -m twine upload --skip-existing dist/*
+3. pip install --index-url https://test.pypi.org/simple/ my-package
+   pip install thuonglib
+   pip install --no-cache-dir thuongcli
 '''
