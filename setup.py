@@ -12,7 +12,7 @@ with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='thuonglib',                    # Tên gói: thường chỉ gồm chữ thường và dấu gạch ngang
-    version='1.0.3',                      # Phiên bản: tuân theo Semantic Versioning
+    version='1.0.4',                      # Phiên bản: tuân theo Semantic Versioning
     author='Tran Dinh Thuong',
     author_email='qbquangbinh@gmail.com',
     url='https://github.com/qbquangb/thuonglib',  # URL của project

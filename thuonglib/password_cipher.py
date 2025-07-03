@@ -1,5 +1,6 @@
 def p_cipher():
     import os
+    import getpass
 
     def xor_encrypt(plaintext: bytes, key: bytes) -> bytes:
         return bytes(p ^ key[i % len(key)] for i, p in enumerate(plaintext))
@@ -25,10 +26,7 @@ def p_cipher():
         OPTION |= FLAG_DECRYPT
     # Thuc hien ma hoa ********************************************************************************
     if OPTION & FLAG_ENCRYPT:
-        key = os.getenv("keypass").encode('utf-8')
-        if not key:
-            print("Bien moi truong keypass khong ton tai.")
-            return
+        key = getpass.getpass("Nhap khoa mat khau: ").encode('utf-8')
 
         plaintext = input("Nhap van ban can ma hoa: ").encode('utf-8')
 
@@ -71,10 +69,7 @@ def p_cipher():
     # Thuc hien giai ma ****************************************************************************
 
     if OPTION & FLAG_DECRYPT:
-        key = os.getenv("keypass").encode('utf-8')
-        if not key:
-            print("Bien moi truong keypass khong ton tai.")
-            return
+        key = getpass.getpass("Nhap khoa mat khau: ").encode('utf-8')
         line_number = input("Nhap so dong can giai ma: ")
         try:
             line_number = int(line_number)
