@@ -6,10 +6,13 @@ import os
 import getpass
 
 class AESCipherCBC:
-    def __init__(self, type_enc_return: str = 'bytes', type_decrypt_arg: str = 'bytes'):
+    def __init__(self, key_AES: bytes = None, type_enc_return: str = 'bytes', type_decrypt_arg: str = 'bytes'):
         # Nếu không có key truyền vào, tự sinh khóa AES-256
         # Hỗ trợ 128 bit (16 byte), 192 bit (24 byte) và 256 bit (32 byte).
-        self.key = self.__set_key() or get_random_bytes(16)
+        if key_AES:
+            self.key = key_AES
+        else:
+            self.key = self.__set_key() or get_random_bytes(16)
         self.bs = AES.block_size  # 16 bytes
         self.__type_enc_return = type_enc_return  # Kiểu trả về khi mã hóa
         self.__type_decrypt_arg = type_decrypt_arg  # Kiểu dữ liệu đầu vào khi giải mã
@@ -78,10 +81,14 @@ def encrypt_file_AES_CBC() -> None:
     os.remove(input_file)
     print(f"File goc {input_file} da duoc xoa.")
     print("**********************************************************************")
+    return aes.key, output_file  # Trả về khóa AES đã sử dụng để mã hóa
 
-def decrypt_file_AES_CBC() -> None:
+def decrypt_file_AES_CBC(key_AES: bytes = None) -> None:
     input_file = r"{}".format(input("Nhap duong dan file can giai ma: "))
-    aes = AESCipherCBC()
+    if key_AES:
+        aes = AESCipherCBC(key_AES=key_AES)
+    else:
+        aes = AESCipherCBC()
 
     with open(input_file, 'rb') as f:
         cipher_data = f.read()
