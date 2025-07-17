@@ -1,4 +1,4 @@
-
+from thuonglib.math_lib import gf_mul
 
 def build_config(config, separator='.'):
     """
@@ -142,7 +142,62 @@ def base64_to_bytes(base64_str: str) -> bytes:
     import base64
     return base64.b64decode(base64_str.encode('utf-8'))
 
+def bytes_distance_bytes(b1: bytes, b2: bytes, algorithm: int = 1) -> int:
+    """
+    Tính khoảng cách giữa hai chuỗi bytes.\n
+    algorithm = 1 (default) sử dụng hàm hamming_distance, hàm tính khoảng cách Hamming (số bit khác nhau).\n
+    algorithm = 0 sử dụng hàm byte_diff_sum, hàm tính tổng độ lệch tuyệt đối trên từng byte.
+    
+    Example:
+        b1 = b'\x08-\xd6ahds'
+        b2 = b'\x08-\xd6ahds'
+        distance = bytes_distance_bytes(b1, b2)
+        distance sẽ là 0 vì hai chuỗi giống nhau
+    """
+    if len(b1) != len(b2):
+        raise ValueError("Both byte sequences must have the same length")
+    if algorithm:
+        print(f"Using algorithm hamming_distance for distance calculation.")
+        return sum(bin(x ^ y).count('1') for x, y in zip(b1, b2))
+    print(f"Using algorithm byte_diff_sum for distance calculation.")
+    return sum(abs(x - y) for x, y in zip(b1, b2))
+
+def ghash(H, A, C):
+    '''
+    Compute GHASH for AES-GCM.
+    H: 128-bit integer subkey for GHASH
+    A: list of 128-bit integers (AAD blocks)
+    C: list of 128-bit integers (ciphertext blocks)
+    Returns: 128-bit integer result of GHASH.
+    Raises ValueError if H is not a 128-bit integer or A/C contain invalid values.
+    Uses carry-less multiplication and reduction by polynomial R.
+    using constant R = 0xE1000000000000000000000000000000 for reduction.
+    Example usage:
+    H = 0x66e94bd4ef8a2c3b884cfa59ca342b2e  # example subkey
+    A = [0xfeedfacedeadbeeffeedfacedeadbeef]  # example AAD block
+    C = [0x42831ec2217774244b7221b784d0d49c]  # example ciphertext block
+    gh = ghash(H, A, C)
+    hex_gh = f"{gh:032x}"  # format as hex string
+    print(f"GHASH: {hex_gh}")
+    '''
+    # A and C are lists of 128-bit ints
+    # length bits
+    lenA = len(A)*128
+    lenC = len(C)*128
+    # form X blocks: A blocks + C blocks + length block
+    X = A + C + [ (lenA << 64) | lenC ]
+    Y = 0
+    for Xi in X:
+        Y = gf_mul(Y ^ Xi, H)
+    return Y
+
 if __name__ == "__main__":
-    data = "CC3WYWhkcw=="
-    int_list = base64_to_bytes(data)
-    print("Dữ liệu ban đầu:", int_list)
+    H = 0x66e94bd4ef8a2c3b884cfa59ca342b2e
+    # AAD: one block
+    A = [0xfeedfacedeadbeeffeedfacedeadbeef]
+    # C: one block
+    C = [0x42831ec2217774244b7221b784d0d49c]
+
+    gh = ghash(H, A, C)
+    hex_gh = f"{gh:032x}"
+    print(f"GHASH: {hex_gh}")

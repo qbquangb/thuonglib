@@ -46,6 +46,50 @@ def is_prime(n):
             return False
     return True
 
+def gf4_mul(a: int, b: int) -> int:
+    """
+    Nhân hai phần tử a, b trong GF(2^4) với đa thức mũ x^4 + x + 1.
+    a, b: số nguyên 0..15 biểu diễn đa thức bậc <4.
+    Trả về kết quả cũng trong 0..15.
+    """
+    # Đa thức mũ P(x) = x^4 + x + 1 -> 0x13
+    IRRED_POLY = 0x13
+    result = 0
+    # Nhân carry-less
+    for i in range(4):
+        if (b >> i) & 1:
+            result ^= a << i
+    # Rút gọn modulo P(x)
+    # result có thể lên đến 7 bit, ta rút gọn từ bậc cao
+    for shift in range(7, 3, -1):  # kiểm tra bit 6..4
+        if (result >> shift) & 1:
+            # dịch IRRED_POLY lên đúng bậc và XOR
+            result ^= IRRED_POLY << (shift - 4)
+    # giữ lại 4 bit thấp nhất
+    return result & 0xF
+
+def gf_mul(x, y):
+    '''
+    Multiply two elements in GF(2^128) using carry-less multiplication.
+    x, y: 128-bit integers (0 <= x, y < 2^128)
+    Returns: 128-bit integer result of multiplication mod R.
+    x, y should be in range [0, 2^128 - 1].
+    Raises ValueError if x or y is out of range.
+    using in AES-GCM for GHASH computation.
+    '''
+    R = 0xE1000000000000000000000000000000
+    # carry-less multiplication
+    z = 0
+    for i in range(128):
+        if (y >> (127 - i)) & 1:
+            z ^= x << (127 - i)
+    # reduce mod x^128 + x^7 + x^2 + x + 1
+    # z can be up to 255 bits
+    for i in reversed(range(128, z.bit_length())):
+        if (z >> i) & 1:
+            z ^= R << (i - 128)
+    return z
+
 if __name__ == "__main__":
     r = is_prime(31)
     print(f"Is 31 prime? {r}")
