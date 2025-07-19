@@ -1,5 +1,3 @@
-from thuonglib.math_lib import gf_mul
-
 def build_config(config, separator='.'):
     """
     Chuyển cấu trúc lồng nhau (dict, list, tuple) thành một flat dict.
@@ -180,6 +178,7 @@ def ghash(H, A, C):
     hex_gh = f"{gh:032x}"  # format as hex string
     print(f"GHASH: {hex_gh}")
     '''
+    from thuonglib.math_lib import gf_mul
     # A and C are lists of 128-bit ints
     # length bits
     lenA = len(A)*128
@@ -192,6 +191,8 @@ def ghash(H, A, C):
     return Y
 
 if __name__ == "__main__":
+    import sys
+    sys.path.pop(0)
     H = 0x66e94bd4ef8a2c3b884cfa59ca342b2e
     # AAD: one block
     A = [0xfeedfacedeadbeeffeedfacedeadbeef]
