@@ -68,7 +68,12 @@ class AESCipherCBC:
         padded = cipher.decrypt(ct)
         return unpad(padded, self.bs)
     
-def encrypt_file_AES_CBC() -> None:
+    @classmethod
+    def load_key(cls, key_bytes: bytes):
+        """Tạo instance từ key đã lưu."""
+        return cls(key=key_bytes)
+    
+def encrypt_file_AES_CBC(del_input_file = 1) -> None:
     input_file = r"{}".format(input("Nhap duong dan file can ma hoa: "))
     aes = AESCipherCBC()
 
@@ -86,10 +91,12 @@ def encrypt_file_AES_CBC() -> None:
     print(f"File da duoc ma hoa va luu tai: {output_file}")
     print("**********************************************************************")
 
-    os.remove(input_file)
-    print(f"File goc {input_file} da duoc xoa.")
-    print("**********************************************************************")
-    return aes.key, output_file  # Trả về khóa AES đã sử dụng để mã hóa
+    if del_input_file:
+        os.remove(input_file)
+        print(f"File goc {input_file} da duoc xoa.")
+        print("**********************************************************************")
+        return None
+    return aes.key, output_file, input_file
 
 def decrypt_file_AES_CBC(key_AES: bytes = None) -> None:
     input_file = r"{}".format(input("Nhap duong dan file can giai ma: "))

@@ -122,7 +122,7 @@ def encrypt_file():
     '''
 
     print("Note: khi xuất hiện dòng chữ (Nhap khoa AES 16 bytes: ) thì nhấn Enter để tự động sinh khóa AES-128")
-    key_AES, output_file = encrypt_file_AES_CBC()
+    key_AES, output_file, input_file = encrypt_file_AES_CBC(del_input_file = 0)
 
     rsa_cipher = RSA_OAEP_Cipher(init_key = 0)
     cipher_key_AES = rsa_cipher.encrypt(key_AES, rsa_cipher.public_key)
@@ -131,6 +131,9 @@ def encrypt_file():
     with open(output_file, 'wb') as f:
         f.write(cipher_key_AES)
     print(f"Khóa AES - 128 đã được mã hóa bằng RSA - OAEP và lưu tại: {output_file}")
+    print("**********************************************************************")
+    os.remove(input_file)
+    print(f"File goc {input_file} da duoc xoa.")
     print("**********************************************************************")
     return
 
