@@ -100,8 +100,9 @@ def encrypt_file_AES_GCM() -> None:
     print("**********************************************************************")
     return
 
-def decrypt_file_AES_GCM(key_AES: bytes = None) -> None:
-    input_file = r"{}".format(input("Nhap duong dan file can giai ma: "))
+def decrypt_file_AES_GCM(key_AES: bytes = None, input_file: str = None) -> None:
+    if not input_file:
+        input_file = r"{}".format(input("Nhap duong dan file can giai ma: "))
     if key_AES:
         aes = AESGCMCipher(key_AES=key_AES)
     else:

@@ -17,7 +17,9 @@ def extended_gcd(a, b):
     Sử dụng thuật toán Euclid mở rộng.
 
     Áp dụng thuật toán trong tìm hệ số d trong RSA.
-    Thay a = e, b = phi(n), ta sẽ tìm được d sao cho ed ≡ 1 (mod phi(n)).
+    Thay a = e, b = phi_n, ta sẽ tìm được d sao cho ed ≡ 1 (mod phi_n).
+    Example:
+        gcd, d, y = extended_gcd(e, phi_n)
 
     :param a: Số nguyên thứ nhất
     :param b: Số nguyên thứ hai
@@ -91,5 +93,5 @@ def gf_mul(x, y):
     return z
 
 if __name__ == "__main__":
-    r = is_prime(31)
-    print(f"Is 31 prime? {r}")
+    gcd, d, y = extended_gcd(3, 20)
+    print(f"GCD: {gcd}, d: {d}, y: {y}")

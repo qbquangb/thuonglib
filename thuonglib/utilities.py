@@ -160,6 +160,27 @@ def bytes_distance_bytes(b1: bytes, b2: bytes, algorithm: int = 1) -> int:
     print(f"Using algorithm byte_diff_sum for distance calculation.")
     return sum(abs(x - y) for x, y in zip(b1, b2))
 
+def convert_to_base(x: int, base: int) -> list[int]:
+    '''
+    Convert an integer to a list of digits in a given base.
+
+    :param x: The integer to convert.
+    :param base: The base to convert to (e.g., 2 for binary).
+    :return: A list of digits representing the number in the specified base.
+
+    Example:
+    >>> convert_to_base(545785, 2)
+    [1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1]
+    '''
+    res = []
+    quotient, remainder = divmod(x, base)
+    res.append(remainder)
+    while quotient != 0:
+        quotient, remainder = divmod(quotient, base)
+        res.append(remainder)
+    res.reverse()
+    return res
+
 class cipher_utilities:
 
     @staticmethod
@@ -346,11 +367,69 @@ class cipher_utilities:
         
         # Gọi hàm tính SHA-256
         return sha256(message)
+    
+class bit_utilities:
+
+    @staticmethod
+    def bit_status(value: int, bit_pos: int) -> bool:
+        """
+        Kiểm tra trạng thái của bit thứ bit_pos (tính từ 1) trong giá trị value.
+        Độ rộng của value là 8 bit (int).
+        Trả về True nếu bit được bật (1), ngược lại trả về False (0).
+        """
+        if not isinstance(value, int):
+            raise TypeError("value must be an integer")
+        if bit_pos < 1 or bit_pos > 8:
+            raise ValueError("bit_pos must be between 1 and 8")
+        # Kiểm tra bit thứ bit_pos (tính từ 1)
+        return (value & (1 << (bit_pos - 1))) != 0
+    
+    @staticmethod
+    def change_bit(value: int, bit_pos: int) -> int:
+        """
+        Thay đổi trạng thái của bit thứ bit_pos (tính từ 1, one-based) trong giá trị value.
+        Độ rộng của value là 8 bit (int).
+        Trả về giá trị mới sau khi thay đổi bit.
+        """
+        if not isinstance(value, int):
+            raise TypeError("value must be an integer")
+        if bit_pos < 1 or bit_pos > 8:
+            raise ValueError("bit_pos must be between 1 and 8")
+        if bit_utilities.bit_status(value, bit_pos):
+            # Nếu bit đang bật (1), tắt nó
+            return value & ~(1 << (bit_pos - 1))
+        else:
+            # Nếu bit đang tắt (0), bật nó
+            return value | (1 << (bit_pos - 1))
+
+    @staticmethod
+    def toggle_bit(x: int, k: int, w: int) -> int:
+        """
+        Toggle (đảo) trạng thái bit thứ k (one-based) của x, với độ rộng w bit.
+        
+        Tham số:
+        x (int): số nguyên gốc (có thể lớn hơn w bit, nhưng chúng ta chỉ quan tâm w bit thấp nhất).
+        k (int): vị trí bit (1 ≤ k ≤ w), đếm từ 1 (bit 1 là LSB).
+        w (int): độ rộng bit, phải ≥ 1.
+        
+        Trả về:
+        int: số nguyên mới sau khi đã toggle bit thứ k và cắt về đúng w bit.
+        """
+        if not (1 <= k <= w):
+            raise ValueError(f"k phải nằm trong [1, {w}], nhưng k={k}")
+        
+        # Tạo mask có duy nhất bit thứ k (one-based) = 1
+        mask = 1 << (k - 1)
+        
+        # XOR để lật bit; AND với (2**w - 1) để giữ đúng w bit thấp
+        return (x ^ mask) & ((1 << w) - 1)
+
 
 if __name__ == "__main__":
     import sys
     sys.path.pop(0)
 
-    message = "Hello, world!"
-    hash_value = cipher_utilities.SHA_256(message)
-    print(f"SHA-256 hash: {hash_value}")
+    a = 97
+    print(f"Original value: {a} (binary: {bin(a)})")
+    for i in range(1, 9):
+        print(f"Bit {i}: {bin(bit_utilities.toggle_bit(a, i, 8))}")
