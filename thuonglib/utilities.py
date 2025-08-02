@@ -265,6 +265,7 @@ class cipher_utilities:
     
     @staticmethod
     def SHA_256(message: bytes | str) -> str:
+        print("\nĐang sử dụng my hash, SHA_256.")
         import struct
 
         # Hằng số ban đầu (8 giá trị băm ban đầu - lấy từ căn bậc hai của các số nguyên tố đầu tiên)
@@ -368,6 +369,209 @@ class cipher_utilities:
         # Gọi hàm tính SHA-256
         return sha256(message)
     
+    @staticmethod
+    # Tạo chữ ký cho file
+    def my_sign_file(M = None,file_out = None, salt_len=32, hash_func=SHA_256):
+        """
+        Sign a file using RSA-PSS
+        salt_len = 32 bytes.
+        """
+        print("\nĐang chạy thuật toán my sign.")
+        from Crypto.Random                      import get_random_bytes
+        import math
+        import asn1tools
+        from pathlib                            import Path
+        import os
+        if M is None:
+            file_path = r"{}".format(input("Nhap duong dan file can ký: "))
+        n  = int(input("Nhập số n: ").strip())
+        d  = int(input("Nhập số d: ").strip())
+        private_key = (d, n)
+        if M is None:
+            with open(file_path, 'rb') as f:
+                M = f.read()  # Đọc nội dung file
+        salt = get_random_bytes(salt_len)  # Sinh salt ngẫu nhiên
+        M_salt = M + salt
+        m_salt_hash = hash_func(M_salt)
+        m_salt_hash = bytes.fromhex(m_salt_hash)
+        m_int = int.from_bytes(m_salt_hash, 'big')
+        s = cipher_utilities.rsa_decrypt(m_int, *private_key)  # Tạo chữ ký bằng khóa riêng
+        signature = int.to_bytes(s, math.ceil((s.bit_length()) / 8), 'big')
+        spec = asn1tools.compile_files('file_asn.asn', codec='der')
+        try:
+            path = Path(file_path)
+            filename = path.stem
+        except:
+            filename = "filename"
+        file_M = {
+            'namefile':  filename,
+            'datafile':   M,
+        }
+        file_salt = {
+            'namefile':  'salt',
+            'datafile':   salt,
+        }
+        file_sign = {
+            'namefile':  'sign',
+            'datafile':   signature,
+        }
+        files = [file_M, file_salt, file_sign]
+        der_files = spec.encode('FileList', files)
+        if file_out is None:
+            file_path += '.signed'
+            with open(file_path, 'wb') as f:
+                f.write(der_files)
+            print('Đã ký file.')
+            print(f"file đã ký lưu tại: {file_path}")
+            os.remove(file_path[:-7])
+            print(f"Đã xóa file: {file_path[:-7]}")
+        else:
+            file_out += '.signed'
+            with open(file_out, 'wb') as f:
+                f.write(der_files)
+            print('Đã ký file.')
+            print(f"file đã ký lưu tại: {file_out}")
+        return
+    
+    @staticmethod
+    def my_verify_signature(hash_func=SHA_256):
+        """Verify a signature using RSA-PSS"""
+        print("\nĐang chạy thuật toán my sign.")
+        import math
+        import asn1tools
+        from pathlib                            import Path
+        import os
+        file_path = r"{}".format(input("\nNhap duong dan file can xác minh chữ ký: "))
+        n  = int(input("\nNhập số n: ").strip())
+        e  = int(input("\nNhập số e: ").strip())
+        public_key = (e, n)
+        with open(file_path, 'rb') as f:
+            data = f.read()  # Đọc nội dung file
+        spec = asn1tools.compile_files('file_asn.asn', codec='der')
+        decoded_files = spec.decode('FileList', data)
+        M = decoded_files[0]['datafile']
+        salt = decoded_files[1]['datafile']
+        signature = decoded_files[2]['datafile']
+        M_salt = M + salt
+        m_salt_hash = hash_func(M_salt)
+        m_salt_hash = bytes.fromhex(m_salt_hash)
+        s = int.from_bytes(signature, 'big')
+        m = cipher_utilities.rsa_encrypt(s, *public_key)  # Giải mã chữ ký bằng khóa công khai
+        m_salt_hash_sign = int.to_bytes(m, math.ceil((m.bit_length()) / 8), 'big')
+        if m_salt_hash == m_salt_hash_sign:
+            with open(f'{file_path[:-7]}', 'wb') as f:
+                f.write(M)
+            print("\nChữ ký số hợp lệ.")
+            print(f"Đã tạo file: {file_path[:-7]}")
+            choice = input(f"\nBạn có muốn xóa file {file_path} không? (y/n): ").strip().lower()
+            while choice not in ('y', 'n'):
+                choice = input("Khong hop le. Vui long nhap 'y' hoac 'n': ").strip().lower()
+            if choice == 'y':
+                os.remove(file_path)
+                print(f"\nFile {file_path} da duoc xoa.")
+            else:
+                print(f"\nKhong xoa file {file_path}")
+            return file_path[:-7]
+        print("\nChữ ký số không hợp lệ.")
+        return False
+    
+    @staticmethod
+    # Sinh cặp khóa RSA
+    def generate_rsa_keys(bits=2048):
+        """
+        Generate RSA keys.
+        bits = 2048, độ dài modulus n bằng 2048 bits, n được biểu diển ra số nhị phân dùng 2048 bits.
+        """
+        from Crypto.Util.number                 import getPrime
+        p = getPrime(bits // 2)
+        q = getPrime(bits // 2)
+        while p == q:  # Đảm bảo p và q khác nhau
+            cipher_utilities.generate_rsa_keys(bits)
+        n = p * q
+        phi = (p - 1) * (q - 1)
+        e = 65537  # Giá trị phổ biến cho e
+        d = pow(e, -1, phi)  # Tính d
+        return (e, n), (d, n)  # Trả về khóa công khai (e, n) và khóa riêng (d, n)
+
+    @staticmethod
+    # Mã hóa RSA (dùng khóa công khai)
+    def rsa_encrypt(m, e, n):
+        """RSA encryption"""
+        return pow(m, e, n)
+    @staticmethod
+    # Giải mã RSA (dùng khóa riêng)
+    def rsa_decrypt(c, d, n):
+        """RSA decryption"""
+        return pow(c, d, n)
+
+    @staticmethod
+    def enc_hash_sign(my_sign_file = my_sign_file, hash_func=SHA_256):
+        from thuonglib.encrypt_decrypt_file         import encrypt_file
+        from Crypto.Random                          import get_random_bytes
+        import math
+        import asn1tools
+        from pathlib                                import Path
+        import os
+        print("\nĐang chạy thuật toán my.")
+        # Mã hóa file.
+        output_file = encrypt_file()
+        # Tạo file hash + enc.
+        with open(output_file, 'rb') as f:
+            data = f.read()
+        hash = hash_func(data)
+        hash = bytes.fromhex(hash)
+        enc_hash = hash + data
+        del data, hash
+        # Tạo file enc + hash + sign.
+        my_sign_file(M = enc_hash,file_out = output_file)
+        os.remove(output_file)
+        return
+    
+    @staticmethod
+    def Vsign_Chash_def(my_verify_signature = my_verify_signature, hash_func=SHA_256):
+        from Crypto.Random                          import get_random_bytes
+        import math
+        import asn1tools
+        from pathlib                                import Path
+        import os
+        import base64
+        print("\nĐang chạy thuật toán my.")
+        # Xác minh chữ ký số, xác minh nguồn gốc.
+        file_path = my_verify_signature()
+        if file_path:
+            print("\nChữ ký số hợp lệ.")
+        else:
+            print("\nChữ ký số không hợp lệ.")
+            return
+        # Kiểm tra tra tính toàn vẹn của dữ liệu.
+        with open(file_path, 'rb') as f:
+            raw = f.read()
+        value_hash = raw[:32]
+        data = raw[32:]
+        del raw
+        hash = hash_func(data)
+        hash = bytes.fromhex(hash)
+        if hash == value_hash:
+            print("\nDữ liệu toàn vẹn.")
+            del hash, value_hash
+        else:
+            print("\nDữ liệu không toàn vẹn.")
+            return
+        # Giải mã file bằng thuật toán XOR.
+        print("\nĐang chạy thuật toán my_XOR.")
+        key = input("Nhap khoa giai ma data: ").encode('utf-8')
+        cipher_data_level1 = base64.b64decode(data)
+        decrypted_data = bytes(p ^ key[i % len(key)] for i, p in enumerate(cipher_data_level1))
+        output_file = file_path[:-4]  # Loại bỏ phần mở rộng .enc
+
+        with open(output_file, 'wb') as f:
+            f.write(decrypted_data)
+
+        print("**********************************************************************")
+        print(f"File da duoc giai ma va luu tai: {output_file}")
+        print("**********************************************************************")
+        return
+
 class bit_utilities:
 
     @staticmethod
@@ -429,7 +633,5 @@ if __name__ == "__main__":
     import sys
     sys.path.pop(0)
 
-    a = 97
-    print(f"Original value: {a} (binary: {bin(a)})")
-    for i in range(1, 9):
-        print(f"Bit {i}: {bin(bit_utilities.toggle_bit(a, i, 8))}")
+    # cipher_utilities.enc_hash_sign()
+    cipher_utilities.Vsign_Chash_def()

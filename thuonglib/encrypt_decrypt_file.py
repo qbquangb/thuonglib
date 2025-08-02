@@ -9,7 +9,8 @@ def xor_decrypt(ciphertext: bytes, key: bytes) -> bytes:
 # cùng phép XOR, vì tính chất đảo ngược
     return xor_encrypt(ciphertext, key)
 
-def encrypt_file() -> None:
+def encrypt_file():
+    print("\nĐang chạy thuật toán my_XOR.")
     input_file = r"{}".format(input("Nhap duong dan file can ma hoa: "))
     key = input("Nhap khoa ma hoa data: ").encode('utf-8')
 
@@ -31,8 +32,10 @@ def encrypt_file() -> None:
     os.remove(input_file)
     print(f"File goc {input_file} da duoc xoa.")
     print("**********************************************************************")
+    return output_file
 
 def decrypt_file() -> None:
+    print("\nĐang chạy thuật toán my_XOR.")
     input_file = r"{}".format(input("Nhap duong dan file can giai ma: "))
     key = input("Nhap khoa giai ma data: ").encode('utf-8')
 

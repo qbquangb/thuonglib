@@ -171,4 +171,10 @@ if __name__ == '__main__':
 
     # encrypt_file()
 
-    decrypt_file()
+    # decrypt_file()
+
+    key = RSA.generate(2048)
+    public_key = key.publickey()
+    print(f"\nn: {key.n}")
+    print(f"\nd: {key.d}")
+    print(f"\ne: {key.e}")
