@@ -50,8 +50,9 @@ def export_keys_RSA_OAEP(path_config = 'config.yaml'):
 export_keys:
     priv_path: G:\My Drive\backup\RSA_OAEP\private.pem
     pub_path: G:\My Drive\backup\RSA_OAEP\public.pem
-2. Di chuyển đến thư mục chứa file config.yaml
-3. Chạy lệnh: python RSA_OAEP.py"""
+2. Tạo thư mục G:\My Drive\backup\RSA_OAEP
+3. Di chuyển đến thư mục chứa file config.yaml
+4. Chạy lệnh: python RSA_OAEP.py"""
     print(data_print)
     del data_print
     print("**********************************************************************")

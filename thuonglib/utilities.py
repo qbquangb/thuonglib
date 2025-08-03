@@ -572,6 +572,96 @@ class cipher_utilities:
         print("**********************************************************************")
         return
 
+    @staticmethod
+    def sign_file(file_path: str, private_key_path: str, passworld_key: bool = True) -> bool:
+        """
+        Tạo chữ ký số cho file sử dụng khóa riêng RSA.
+        Chương trình sử dụng thư viện pycryptodome.
+        Cấu trúc file .sig: "4 bytes đầu là chiều dài của signature, tính bằng bytes | signature | file"
+
+        :param file_path: Đường dẫn đến file cần ký (chuỗi).
+        :param private_key_path: Đường dẫn đến file .pem chứa khóa riêng RSA.
+        """
+        from Crypto.PublicKey           import RSA
+        from Crypto.Signature           import pss
+        from Crypto.Hash                import SHA256
+        import getpass
+        import struct
+        import os
+        
+        print("\nĐang chạy thuật toán tạo chữ ký số, sử dụng thư viện pycryptodome.")
+        hash_obj = SHA256.new()
+        with open(file_path, 'rb') as f:
+            while chunk := f.read(4096):
+                hash_obj.update(chunk)
+        # Nhập khóa riêng tư từ file ".PEM".
+        if passworld_key:
+            passphrase = getpass.getpass("Nhập chuỗi mật khẩu được sử dụng để bảo vệ khóa riêng tư: ").strip()
+        with open(private_key_path, 'rb') as f:
+            private_key = RSA.import_key(f.read(), passphrase = f'{passphrase}' if passworld_key else None)
+        signer = pss.new(private_key)
+        signature = signer.sign(hash_obj)
+        with open(file_path, 'rb') as fr, open(file_path + '.sig', 'wb') as fw:
+            fw.write(struct.pack('>I', len(signature)))
+            fw.write(signature)
+            while chunk := fr.read(4096):
+                fw.write(chunk)
+            del chunk
+        file_path += ".sig"
+        print("\nĐã tạo chữ ký số.")
+        print(f"Đã lưu file {file_path}.")
+        os.remove(file_path[:-4])
+        print(f"Đã xóa file {file_path[:-4]}")
+        return
+
+    @staticmethod
+    def verify_signature(file_path: str, public_key_path: str) -> bool:
+        """
+        Xác minh chữ ký số của file .sig, sử dụng khóa công khai RSA.
+        Cấu trúc file .sig: "4 bytes đầu là chiều dài của signature, tính bằng bytes | signature | file"
+
+        :param file_path: Đường dẫn đến file cần xác minh (chuỗi).
+        :return: True nếu chữ ký hợp lệ, False nếu không.
+        """
+        from Crypto.PublicKey       import RSA
+        from Crypto.Signature       import pss
+        from Crypto.Hash            import SHA256
+        import struct
+        import os
+
+        print("\nĐang chạy thuật toán xác minh chữ ký số, sử dụng thư viện pycryptodome.")
+        hash_obj = SHA256.new()
+        # Nhập khóa công khai từ file ".PEM".
+        with open(public_key_path, 'rb') as f:
+            public_key = RSA.import_key(f.read())
+        with open(file_path, 'rb') as f, open(file_path[:-4], 'wb') as fw:
+            # Đọc độ dài signature (bytes).
+            signature_len = struct.unpack('>I', f.read(4))[0]
+            signature = f.read(signature_len)
+            while chunk := f.read(4096):
+                hash_obj.update(chunk)
+                fw.write(chunk)
+        verifier = pss.new(public_key)
+        try:
+            verifier.verify(hash_obj, signature)
+            print("\nChữ ký số hợp lệ.")
+            choice = input(f"Ban co muon xoa file {file_path} khong? (y/n): ").strip().lower()
+            while choice not in ('y', 'n'):
+                choice = input("Khong hop le. Vui long nhap 'y' hoac 'n': ").strip().lower()
+            if choice == 'y':
+                os.remove(file_path)
+                print("**********************************************************************")
+                print(f"File {file_path} da duoc xoa.")
+                print("**********************************************************************")
+            else:
+                print("**********************************************************************")
+                print(f"Khong xoa file {file_path}.")
+                print("**********************************************************************")
+            return True
+        except (ValueError, TypeError):
+            print("\nChữ ký số không hợp lệ.")
+            return False
+
 class bit_utilities:
 
     @staticmethod
@@ -633,5 +723,5 @@ if __name__ == "__main__":
     import sys
     sys.path.pop(0)
 
-    # cipher_utilities.enc_hash_sign()
-    cipher_utilities.Vsign_Chash_def()
+    # cipher_utilities.sign_file(r"D:\Phanmem\test\LICENSE-3RD-PARTY.txt", r"G:\My Drive\backup\RSA_USE\private.pem")
+    cipher_utilities.verify_signature(r"D:\Phanmem\test\LICENSE-3RD-PARTY.txt.sig", r"G:\My Drive\backup\RSA_USE\public.pem")
