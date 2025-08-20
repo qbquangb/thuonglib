@@ -1,3 +1,5 @@
+__all__ = ["encode_bytes", "decode_bytes", "compress_file_1", "decompress_file_1"]
+
 import heapq
 import struct
 from collections import Counter
